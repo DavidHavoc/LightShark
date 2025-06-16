@@ -1,0 +1,149 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "content": "<div style=\"text-align: center; padding: 40px;\">\n  <h2>Geo-Tagged IP Locations</h2>\n  <p>This panel would display a world map with IP locations when the Worldmap Panel plugin is installed.</p>\n  <p>To enable this feature:</p>\n  <ol style=\"text-align: left; display: inline-block;\">\n    <li>Install the Worldmap Panel plugin in Grafana</li>\n    <li>Configure the panel to use data from /api/enrichment/geo endpoint</li>\n    <li>Map latitude/longitude fields for visualization</li>\n  </ol>\n  <p><strong>Current Status:</strong> <span id=\"geo-status\">Loading...</span></p>\n  <script>\n    fetch('/api/enrichment/geo')\n      .then(response => response.json())\n      .then(data => {\n        document.getElementById('geo-status').innerHTML = \n          `${data.count} IPs with geolocation data available`;\n      })\n      .catch(() => {\n        document.getElementById('geo-status').innerHTML = 'Geolocation data unavailable';\n      });\n  </script>\n</div>",
+        "mode": "html"
+      },
+      "title": "World Map - IP Geolocation",
+      "type": "text"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "displayMode": "auto"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 12
+      },
+      "id": 2,
+      "options": {
+        "content": "<div id=\"geo-table\" style=\"padding: 20px;\">\n  <h3>Geolocation Data</h3>\n  <table style=\"width: 100%; border-collapse: collapse;\">\n    <thead>\n      <tr style=\"background: #333;\">\n        <th style=\"border: 1px solid #555; padding: 8px;\">IP Address</th>\n        <th style=\"border: 1px solid #555; padding: 8px;\">Country</th>\n        <th style=\"border: 1px solid #555; padding: 8px;\">City</th>\n        <th style=\"border: 1px solid #555; padding: 8px;\">ISP</th>\n      </tr>\n    </thead>\n    <tbody id=\"geo-table-body\">\n      <tr><td colspan=\"4\" style=\"text-align: center; padding: 20px;\">Loading...</td></tr>\n    </tbody>\n  </table>\n</div>\n<script>\n  fetch('/api/enrichment/geo')\n    .then(response => response.json())\n    .then(data => {\n      const tbody = document.getElementById('geo-table-body');\n      if (data.geo_tagged_ips && data.geo_tagged_ips.length > 0) {\n        tbody.innerHTML = data.geo_tagged_ips.slice(0, 10).map(ip => \n          `<tr>\n            <td style=\"border: 1px solid #555; padding: 8px;\">${ip.ip}</td>\n            <td style=\"border: 1px solid #555; padding: 8px;\">${ip.country}</td>\n            <td style=\"border: 1px solid #555; padding: 8px;\">${ip.city}</td>\n            <td style=\"border: 1px solid #555; padding: 8px;\">${ip.isp}</td>\n          </tr>`\n        ).join('');\n      } else {\n        tbody.innerHTML = '<tr><td colspan=\"4\" style=\"text-align: center; padding: 20px;\">No geolocation data available</td></tr>';\n      }\n    })\n    .catch(() => {\n      document.getElementById('geo-table-body').innerHTML = \n        '<tr><td colspan=\"4\" style=\"text-align: center; padding: 20px;\">Error loading data</td></tr>';\n    });\n</script>",
+        "mode": "html"
+      },
+      "title": "Geolocation Table",
+      "type": "text"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "displayMode": "auto"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 12
+      },
+      "id": 3,
+      "options": {
+        "content": "<div id=\"country-stats\" style=\"padding: 20px;\">\n  <h3>Country Statistics</h3>\n  <div id=\"country-chart\" style=\"height: 200px; display: flex; align-items: center; justify-content: center;\">\n    Loading country statistics...\n  </div>\n</div>\n<script>\n  fetch('/api/enrichment/geo')\n    .then(response => response.json())\n    .then(data => {\n      const countries = {};\n      if (data.geo_tagged_ips) {\n        data.geo_tagged_ips.forEach(ip => {\n          const country = ip.country || 'Unknown';\n          countries[country] = (countries[country] || 0) + 1;\n        });\n      }\n      \n      const sortedCountries = Object.entries(countries)\n        .sort((a, b) => b[1] - a[1])\n        .slice(0, 5);\n      \n      const chartDiv = document.getElementById('country-chart');\n      if (sortedCountries.length > 0) {\n        chartDiv.innerHTML = sortedCountries.map(([country, count]) => \n          `<div style=\"margin: 5px; padding: 10px; background: #444; border-radius: 3px;\">\n            ${country}: ${count} IPs\n          </div>`\n        ).join('');\n      } else {\n        chartDiv.innerHTML = 'No country data available';\n      }\n    })\n    .catch(() => {\n      document.getElementById('country-chart').innerHTML = 'Error loading country statistics';\n    });\n</script>",
+        "mode": "html"
+      },
+      "title": "Country Distribution",
+      "type": "text"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 27,
+  "style": "dark",
+  "tags": ["network", "geolocation", "map"],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Network Geolocation Dashboard",
+  "uid": "network-geolocation",
+  "version": 1
+}
+

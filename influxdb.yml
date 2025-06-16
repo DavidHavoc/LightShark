@@ -1,0 +1,20 @@
+apiVersion: 1
+
+datasources:
+  - name: InfluxDB-NetworkTraffic
+    type: influxdb
+    access: proxy
+    url: http://influxdb:8086
+    database: network-traffic
+    user: admin
+    secureJsonData:
+      password: password123
+      token: network-analyzer-token-123456789
+    jsonData:
+      version: Flux
+      organization: network-analyzer
+      defaultBucket: network-traffic
+      tlsSkipVerify: true
+    isDefault: true
+    editable: true
+
