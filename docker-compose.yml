@@ -58,8 +58,6 @@ services:
       - ./.env:/app/.env:ro
     depends_on:
       - influxdb
-    networks:
-      - analyzer-network
     # Use host network mode for packet capture
     network_mode: host
     privileged: true

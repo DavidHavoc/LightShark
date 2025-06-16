@@ -153,39 +153,7 @@ For enhanced IP enrichment features, obtain API keys from:
 
 #### Step 1: Install Docker and Docker Compose
 
-**Ubuntu/Debian:**
-```bash
-# Update package index
-sudo apt update
-
-# Install Docker
-curl -fsSL https://get.docker.com -o get-docker.sh
-sudo sh get-docker.sh
-
-# Install Docker Compose
-sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-sudo chmod +x /usr/local/bin/docker-compose
-
-# Add user to docker group
-sudo usermod -aG docker $USER
-newgrp docker
-```
-
-**CentOS/RHEL:**
-```bash
-# Install Docker
-sudo yum install -y yum-utils
-sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-sudo yum install -y docker-ce docker-ce-cli containerd.io
-
-# Start Docker service
-sudo systemctl start docker
-sudo systemctl enable docker
-
-# Install Docker Compose
-sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-sudo chmod +x /usr/local/bin/docker-compose
-```
+**https://docs.docker.com/engine/install/**
 
 #### Step 2: Download and Configure
 
