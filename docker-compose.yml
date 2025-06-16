@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # InfluxDB for time-series data storage
   influxdb:
@@ -16,7 +14,7 @@ services:
       - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=network-analyzer-token-123456789
     volumes:
       - influxdb_data:/var/lib/influxdb2
-      - ./config/influxdb.conf:/etc/influxdb2/influxdb.conf:ro
+      # ./config/influxdb.conf:/etc/influxdb2/influxdb.conf
     networks:
       - analyzer-network
 
