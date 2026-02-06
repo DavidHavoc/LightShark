@@ -1,0 +1,23 @@
+# .env file
+.env
+
+# Virtual environment
+nv
+
+*.log
+
+# Temporary files
+*~
+
+# IDE
+.idea
+.vscode
+
+# Python
+__pycache__
+*.pyc
+
+# Network traffic analyzer
+network-traffic.db
+
+src/__pycache__

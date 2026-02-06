@@ -91,7 +91,7 @@ class PacketCapture:
         cmd = [
             'tshark',
             '-i', interface,
-            '-T', 'json',  # Output in JSON format
+            '-T', 'ek',  # Output in Elasticsearch JSON format for -e field extraction
             '-e', 'frame.time_epoch',
             '-e', 'ip.src',
             '-e', 'ip.dst',
@@ -113,8 +113,9 @@ class PacketCapture:
             cmd.extend(['-f', capture_filter])
         
         # Add PCAP output if enabled
+        # Use -P to also print to stdout while writing to file
         if self.pcap_file:
-            cmd.extend(['-w', self.pcap_file])
+            cmd.extend(['-w', self.pcap_file, '-P'])
         
         # Continuous capture (no packet limit)
         duration = os.getenv('CAPTURE_DURATION', '0')
@@ -128,8 +129,6 @@ class PacketCapture:
         if not self.process:
             return
         
-        buffer = ""
-        
         try:
             while self.is_running and self.process.poll() is None:
                 # Read line from TShark output
@@ -138,51 +137,25 @@ class PacketCapture:
                 if not line:
                     break
                 
-                buffer += line
+                line = line.strip()
+                if not line:
+                    continue
                 
-                # Try to parse complete JSON objects
-                while True:
-                    try:
-                        # Find complete JSON object
-                        start = buffer.find('[')
-                        if start == -1:
-                            break
-                        
-                        # Find matching closing bracket
-                        bracket_count = 0
-                        end = start
-                        for i, char in enumerate(buffer[start:], start):
-                            if char == '[':
-                                bracket_count += 1
-                            elif char == ']':
-                                bracket_count -= 1
-                                if bracket_count == 0:
-                                    end = i + 1
-                                    break
-                        
-                        if bracket_count == 0:
-                            # Parse JSON packet data
-                            json_str = buffer[start:end]
-                            packet_data = json.loads(json_str)
-                            
-                            # Process each packet in the array
-                            for packet in packet_data:
-                                if callback:
-                                    self._process_packet_data(packet, callback)
-                            
-                            # Remove processed data from buffer
-                            buffer = buffer[end:]
-                        else:
-                            break
-                            
-                    except json.JSONDecodeError:
-                        # If JSON is incomplete, wait for more data
-                        break
-                    except Exception as e:
-                        print(f"Error processing packet: {e}")
-                        # Skip this packet and continue
-                        buffer = buffer[start + 1:] if start >= 0 else ""
-                        break
+                # -T ek outputs two lines per packet:
+                # 1. Index line: {"index":...}
+                # 2. Data line: {"timestamp":..., "layers":...}
+                # We only care about lines that have "layers"
+                try:
+                    if '"layers"' in line:
+                        packet_data = json.loads(line)
+                        if callback and 'layers' in packet_data:
+                            self._process_packet_data(packet_data, callback)
+                except json.JSONDecodeError as e:
+                    print(f"JSON decode error: {e}")
+                    continue
+                except Exception as e:
+                    print(f"Error processing packet: {e}")
+                    continue
         
         except Exception as e:
             print(f"Error reading packets: {e}")
@@ -192,22 +165,23 @@ class PacketCapture:
     def _process_packet_data(self, packet, callback):
         """Process individual packet data and call callback"""
         try:
-            # Extract packet information
-            layers = packet.get('_source', {}).get('layers', {})
+            # In -T ek format, layers are directly in the packet, not under _source
+            layers = packet.get('layers', {})
             
+            # Field names in -T ek format use underscores instead of dots
             packet_info = {
-                'timestamp': float(layers.get('frame.time_epoch', [time.time()])[0]),
-                'src_ip': layers.get('ip.src', [''])[0],
-                'dst_ip': layers.get('ip.dst', [''])[0],
-                'protocol': layers.get('ip.proto', [''])[0],
-                'protocols': layers.get('frame.protocols', [''])[0],
-                'length': int(layers.get('frame.len', [0])[0]),
-                'src_port': layers.get('tcp.srcport', layers.get('udp.srcport', ['']))[0],
-                'dst_port': layers.get('tcp.dstport', layers.get('udp.dstport', ['']))[0],
-                'dns_query': layers.get('dns.qry.name', [''])[0],
-                'http_host': layers.get('http.host', [''])[0],
-                'http_method': layers.get('http.request.method', [''])[0],
-                'http_response': layers.get('http.response.code', [''])[0]
+                'timestamp': float(layers.get('frame_time_epoch', [time.time()])[0]),
+                'src_ip': layers.get('ip_src', [''])[0],
+                'dst_ip': layers.get('ip_dst', [''])[0],
+                'protocol': layers.get('ip_proto', [''])[0],
+                'protocols': layers.get('frame_protocols', [''])[0],
+                'length': int(layers.get('frame_len', [0])[0]),
+                'src_port': layers.get('tcp_srcport', layers.get('udp_srcport', ['']))[0],
+                'dst_port': layers.get('tcp_dstport', layers.get('udp_dstport', ['']))[0],
+                'dns_query': layers.get('dns_qry_name', [''])[0],
+                'http_host': layers.get('http_host', [''])[0],
+                'http_method': layers.get('http_request_method', [''])[0],
+                'http_response': layers.get('http_response_code', [''])[0]
             }
             
             # Call the callback function with processed packet data

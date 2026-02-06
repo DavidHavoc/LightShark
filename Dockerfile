@@ -1,11 +1,13 @@
 FROM python:3.11-slim
 
-# Install system dependencies including TShark
+# Install system dependencies including TShark and build tools for Python packages
 RUN apt-get update && apt-get install -y \
     tshark \
     tcpdump \
     net-tools \
     curl \
+    gcc \
+    python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
@@ -30,7 +32,7 @@ ENV FLASK_APP=src/app.py
 ENV FLASK_ENV=production
 
 # Expose port for Flask application
-EXPOSE 5000
+EXPOSE 5001
 
 # Run the application
 CMD ["python", "src/app.py"]
