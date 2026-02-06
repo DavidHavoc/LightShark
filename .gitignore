@@ -21,3 +21,6 @@ __pycache__
 network-traffic.db
 
 src/__pycache__
+
+data/
+logs/
